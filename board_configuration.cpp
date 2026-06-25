@@ -159,8 +159,9 @@ static void setAnalogInputs() {
     engineConfiguration->tps1_1AdcChannel = EFI_ADC_4;
 
     // TPS2 / spare analog IN2 — PB0, ADC12_IN8
-    // Used as secondary TPS for ETB redundancy or spare channel
-    engineConfiguration->tps1_2AdcChannel = EFI_ADC_8;
+    // Second throttle body position sensor (or spare analog).
+    // Field name is tps2_1AdcChannel in rusEFI config struct.
+    engineConfiguration->tps2_1AdcChannel = EFI_ADC_8;
 
     // PPS1 / spare analog IN1 — PA3, ADC123_IN3
     engineConfiguration->throttlePedalPositionAdcChannel = EFI_ADC_3;
@@ -179,10 +180,11 @@ static void setAnalogInputs() {
     engineConfiguration->map.sensor.hwChannel = EFI_ADC_10;
 
     // AUX KNOCK (analog signal monitoring) — PA0, ADC123_IN0
-    // This is the auxiliary knock input routed through ADC1.
-    // It can also be used as a general-purpose analog spare.
+    // PA0 is available as a spare analog input on ADC1 scan group.
+    // Assign it in TunerStudio as a spare analog / general purpose input.
+    // No engineConfiguration field maps directly to a raw spare analog array
+    // in this rusEFI version — assign via TunerStudio "Aux Analog" panel.
     // NOTE: Primary knock (PA2) is on ADC3 — configured in knock_config.h
-    engineConfiguration->auxAnalog[0].hwChannel = EFI_ADC_0;  // AUX KNOCK / PA0
 
     // MAF sensor — PC4, ADC12_IN14
     engineConfiguration->mafAdcChannel = EFI_ADC_14;
@@ -270,13 +272,13 @@ static void setAuxOutputs() {
     engineConfiguration->mainRelayPin = Gpio::B9;
 
     // LOWSIDE1 — PD15
-    // General purpose low-side output.  Assign function in TunerStudio
-    // (e.g. radiator fan, A/C compressor clutch, etc.)
-    engineConfiguration->auxPidPins[0] = Gpio::D15;
+    // General purpose low-side output mapped via GPPWM channel 0.
+    // Assign function (fan, A/C clutch, etc.) in TunerStudio → GPPWM.
+    engineConfiguration->gppwm[0].pin = Gpio::D15;
 
     // LOWSIDE2 — PD13
-    // Second general-purpose low-side output
-    engineConfiguration->auxPidPins[1] = Gpio::D13;
+    // General purpose low-side output mapped via GPPWM channel 1.
+    engineConfiguration->gppwm[1].pin = Gpio::D13;
 }
 
 // ============================================================================
@@ -340,8 +342,7 @@ static void customBoardDefaultConfiguration() {
 
     // --- Injection mode ---
     // Start in batch; switch to sequential in TunerStudio once cam sync confirmed
-    engineConfiguration->injectionMode        = IM_BATCH;
-    engineConfiguration->twoWireBatchInjection = true;
+    engineConfiguration->injectionMode = IM_BATCH;
 
     // --- Ignition mode ---
     // Wasted spark default; change to COP in TunerStudio for sequential ign
